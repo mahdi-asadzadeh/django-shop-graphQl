@@ -1,0 +1,169 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-v4-grid-only@1.0.0/dist/bootstrap-grid.min.css">
+
+ <div class="app-v module">
+    <table style="width: 100%;" >
+      <caption >
+        <a class="section" title="Models in the Accounts application">Statistics</a>
+      </caption>
+    </table>
+  </div>
+ 
+  <section style="width: 100%;" class="content"> 
+      <div class="row">
+        <div class="col-md-12">
+          <!-- Line chart -->
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="far fa-chart-bar"></i>
+                Annual sales
+              </h3>
+              <div class="card-tools mr-3">
+                <form class="form-select" id="filterForm">
+                  <label for="year">Choose a year:</label>
+                  <select name="year" id="year"></select>
+                  <input type="submit" value="Load" name="_load">
+                </form>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="spendPerCustomerChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <!-- Line chart -->
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="far fa-chart-bar"></i>
+                Payments status
+              </h3>
+            </div>
+            <div class="card-body">
+              <canvas id="paymentMethodChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+      <div class="col-md-6">
+          <!-- Line chart -->
+          <div class="card card-primary card-outline">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="far fa-chart-bar"></i>
+                  Products type
+              </h3>
+            </div>
+              <div class="card-body">
+                      <canvas id="paymentSuccessChart"></canvas>
+              </div>
+            </div>
+          </div>
+      </div>
+
+  </section>
+  <script>
+
+    let spendPerCustomerCtx = document.getElementById("spendPerCustomerChart").getContext("2d");
+    let spendPerCustomerChart = new Chart(spendPerCustomerCtx, {
+      type: "line",
+      options: {
+        responsive: true,
+      }
+    });
+    let paymentSuccessCtx = document.getElementById("paymentSuccessChart").getContext("2d");
+    let paymentSuccessChart = new Chart(paymentSuccessCtx, {
+      type: "pie",
+      options: {
+        responsive: true,
+        layout: {
+          padding: {
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 25
+          }
+        }
+      }
+    });
+    let paymentMethodCtx = document.getElementById("paymentMethodChart").getContext("2d");
+    let paymentMethodChart = new Chart(paymentMethodCtx, {
+      type: "pie",
+      options: {
+        responsive: true,
+        layout: {
+          padding: {
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 25
+          }
+        }
+      }
+    });
+  </script>
+  <script>
+    $(document).ready(function() {
+      $.ajax({
+        url: "{% url 'charts:chart_filter_options' %}",
+        type: "GET",
+        dataType: "json",
+        success: (jsonResponse) => {
+          // Load all the options
+          jsonResponse.options.forEach(option => {
+            $("#year").append(new Option(option, option));
+          });
+          // Load data for the first option
+          loadAllCharts($("#year").children().first().val());
+        },
+        error: () => console.log("Failed to fetch chart filter options!")
+      });
+    });
+  
+  $("#filterForm").on("submit", (event) => {
+    event.preventDefault();
+  
+    const year = $("#year").val();
+    loadAllCharts(year)
+  });
+  
+  function loadChart(chart, endpoint) {
+    $.ajax({
+      url: endpoint,
+      type: "GET",
+      dataType: "json",
+      success: (jsonResponse) => {
+        // Extract data from the response
+        const title = jsonResponse.title;
+        const labels = jsonResponse.data.labels;
+        const datasets = jsonResponse.data.datasets;
+  
+        // Reset the current chart
+        chart.data.datasets = [];
+        chart.data.labels = [];
+  
+        // Load new data into the chart
+        chart.options.title.text = title;
+        chart.options.title.display = true;
+        chart.data.labels = labels;
+        datasets.forEach(dataset => {
+          chart.data.datasets.push(dataset);
+        });
+        chart.update();
+      },
+      error: () => console.log("Failed to fetch chart data from " + endpoint + "!")
+    });
+  }
+  
+  function loadAllCharts(year) {
+    loadChart(paymentMethodChart, `/charts/payment-method/${year}/`);
+    loadChart(paymentSuccessChart, `/charts/products-type/`);
+    loadChart(spendPerCustomerChart, `/charts/sales/${year}/`);
+  }
+  </script>
