@@ -1,9 +1,7 @@
 import os
 
-from django.db.models.signals import post_save, post_delete
 from django.conf import settings
 from django.utils.html import format_html
-from django.core.cache import cache
 from django.db import models
 
 from graphene import String, List
@@ -131,26 +129,3 @@ class Stone(models.Model):
 class GalleryProduct(models.Model):
 	product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='galleries')
 	image = models.ImageField(upload_to='products/gallery/')
-
-def save_product(sender, **kwargs):
-	cache.clear()
-
-post_save.connect(save_product, sender=Product)
-
-
-def delete_product(sender, **kwargs):
-	cache.clear()
-
-post_delete.connect(delete_product, sender=Product)
-
-
-def save_product_gallery(sender, **kwargs):
-	cache.clear()
-
-post_save.connect(save_product_gallery, sender=GalleryProduct)
-
-
-def delete_product_gallery(sender, **kwargs):
-	cache.clear()
-
-post_delete.connect(delete_product_gallery, sender=GalleryProduct)

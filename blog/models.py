@@ -4,8 +4,6 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.http import response
 from django.utils.html import format_html
-from django.db.models.signals import post_save, post_delete
-from django.core.cache import cache
 from django.conf import settings
 
 from taggit.managers import TaggableManager
@@ -71,15 +69,3 @@ class Article(models.Model):
 
 	class Meta:
 		ordering = ['-create']
-		
-
-def save_article(sender, **kwargs):
-	cache.clear()
-
-post_save.connect(save_article, sender=Article)
-
-
-def delete_article(sender, **kwargs):
-	cache.clear()
-
-post_delete.connect(delete_article, sender=Article)

@@ -1,8 +1,6 @@
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_save, post_delete
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.db import models
 
 
@@ -37,15 +35,3 @@ class Comment(models.Model):
     create = models.DateTimeField(auto_now_add=True)
 
     objects = CommentManager()
-
-
-def save_comment(sender, **kwargs):
-	cache.clear()
-
-post_save.connect(save_comment, sender=Comment)
-
-
-def delete_comment(sender, **kwargs):
-	cache.clear()
-
-post_delete.connect(delete_comment, sender=Comment)
